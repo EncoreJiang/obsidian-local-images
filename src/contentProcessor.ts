@@ -17,50 +17,21 @@ import {
 } from "./config";
 import { linkHashes } from "./linksHash";
 
-export function imageTagProcessor(app: App, mediaDir: string) {
+export function imageTagProcessor(app: App) {
   async function processImageTag(match: string, anchor: string, link: string) {
-    if (!isUrl(link)) {
-      return match;
-    }
-
+    let originURL: URL;
     try {
-      const fileData = await downloadImage(link);
-
-      // when several images refer to the same file they can be partly
-      // failed to download because file already exists, so try to resuggest filename several times
-      let attempt = 0;
-      while (attempt < FILENAME_ATTEMPTS) {
-        try {
-          const { fileName, needWrite } = await chooseFileName(
-            app.vault.adapter,
-            mediaDir,
-            anchor,
-            link,
-            fileData
-          );
-
-          if (needWrite && fileName) {
-            await app.vault.createBinary(fileName, fileData);
-          }
-
-          if (fileName) {
-            return `![${anchor}](${fileName})`;
-          } else {
-            return match;
-          }
-        } catch (error) {
-          if (error.message === "File already exists.") {
-            attempt++;
-          } else {
-            throw error;
-          }
-        }
+      originURL = new URL(link);
+      if (!originURL) {
+        return match
       }
-      return match;
-    } catch (error) {
-      console.warn("Image processing failed: ", error);
+    } catch (_) {
       return match;
     }
+
+    console.log(originURL)
+
+    return match;
   }
 
   return processImageTag;
