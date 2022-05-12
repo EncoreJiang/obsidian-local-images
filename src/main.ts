@@ -9,7 +9,7 @@ import {
 import safeRegex from "safe-regex";
 
 import { imageTagProcessor } from "./contentProcessor";
-import { replaceAsync, cleanContent } from "./utils";
+import { replaceAsync, ATTACHMENTS_CLASS } from "./utils";
 import {
   ISettings,
   DEFAULT_SETTINGS,
@@ -20,8 +20,8 @@ import {
 } from "./config";
 import { UniqueQueue } from "./uniqueQueue";
 import path from "path";
+import { buildExtension } from "./viewPlugin";
 
-const ATTACHMENTS_CLASS = "internal-embed image-embed is-loaded attachments";
 
 export default class LocalImagesPlugin extends Plugin {
   settings: ISettings;
@@ -80,7 +80,7 @@ export default class LocalImagesPlugin extends Plugin {
       if (file.path.match(includeRegex)) {
         if (notice) {
           // setMessage() is undeclared but factically existing, so ignore the TS error
-          // @ts-expect-error
+          // @ ts-expect-error
           notice.setMessage(
             `Local Images: Processing \n"${file.path}" \nPage ${index} of ${pagesCount}`
           );
@@ -89,7 +89,7 @@ export default class LocalImagesPlugin extends Plugin {
       }
     }
     if (notice) {
-      // @ts-expect-error
+      // @ ts-expect-error
       notice.setMessage(`Local Images: ${pagesCount} pages were processed.`);
 
       setTimeout(() => {
@@ -100,6 +100,10 @@ export default class LocalImagesPlugin extends Plugin {
 
   async onload() {
     await this.loadSettings();
+
+    const extension = buildExtension({ plugin: this });
+    this.registerEditorExtension(extension);
+
     this.app.vault.on("rename", function (file, oldname) {
       console.log("rename:", oldname, "->", file.path);
     })

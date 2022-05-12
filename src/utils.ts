@@ -6,6 +6,8 @@ import filenamify from "filenamify";
 
 import { DIRTY_IMAGE_TAG, FORBIDDEN_SYMBOLS_FILENAME_PATTERN } from "./config";
 import { TFile } from "obsidian";
+
+export const ATTACHMENTS_CLASS = "internal-embed image-embed is-loaded attachments";
 /*
 https://stackoverflow.com/a/48032528/1020973
 It will be better to do it type-correct.
