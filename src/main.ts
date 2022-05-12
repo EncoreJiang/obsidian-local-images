@@ -19,6 +19,9 @@ import {
   TIMEOUT_LIKE_INFINITY,
 } from "./config";
 import { UniqueQueue } from "./uniqueQueue";
+import path from "path";
+
+const ATTACHMENTS_CLASS = "internal-embed image-embed is-loaded attachments";
 
 export default class LocalImagesPlugin extends Plugin {
   settings: ISettings;
@@ -53,7 +56,7 @@ export default class LocalImagesPlugin extends Plugin {
     }
   }
 
-  
+
   // using arrow syntax for callbacks to correctly pass this context
   processActivePage = async () => {
     const activeFile = this.app.workspace.getActiveFile();
@@ -68,9 +71,9 @@ export default class LocalImagesPlugin extends Plugin {
 
     const notice = this.settings.showNotifications
       ? new Notice(
-          `Local Images \nStart processing. Total ${pagesCount} pages. `,
-          TIMEOUT_LIKE_INFINITY
-        )
+        `Local Images \nStart processing. Total ${pagesCount} pages. `,
+        TIMEOUT_LIKE_INFINITY
+      )
       : null;
 
     for (const [index, file] of files.entries()) {
@@ -125,6 +128,35 @@ export default class LocalImagesPlugin extends Plugin {
     this.setupQueueInterval();
 
     this.addSettingTab(new SettingTab(this.app, this));
+
+
+    this.registerMarkdownPostProcessor((element, context) => {
+      const embeds = element.querySelectorAll("div.internal-embed");
+      let baseName = path.basename(context.sourcePath);
+      if (baseName.endsWith('.md')) {
+        baseName = baseName.slice(0, baseName.length - 3)
+      }
+      let attachmentDir = `.${baseName}.attachments`
+
+      for (let index = 0; index < embeds.length; index++) {
+        const embed = embeds.item(index);
+        console.log(embed);
+        const src = embed.getAttr('src');
+        if (src && embed.className !== ATTACHMENTS_CLASS) {
+          if (src.startsWith(attachmentDir)) {
+            embed.className = ATTACHMENTS_CLASS;
+            const image = element.createEl('img');
+            // this.app.vault.getResourcePath(this.app.vault.getAbstractFileByPath(context.sourcePath)[0])
+            const parentPath = this.app.vault.getAbstractFileByPath(context.sourcePath).parent.path;
+            const href = window.require("url").pathToFileURL(
+              path.join((this.app.vault.adapter as any)['basePath'], parentPath, src)).href;
+            console.log("getAbstractFileByPath", href);
+            image.src = "app://local/" + href.replace("file:///", "");
+            embed.appendChild(image);
+          }
+        }
+      }
+    });
   }
 
   setupQueueInterval() {
@@ -163,8 +195,7 @@ export default class LocalImagesPlugin extends Plugin {
   displayError(error: Error | string, file?: TFile): void {
     if (file) {
       new Notice(
-        `LocalImages: Error while handling file ${
-          file.name
+        `LocalImages: Error while handling file ${file.name
         }, ${error.toString()}`
       );
     } else {
@@ -174,7 +205,7 @@ export default class LocalImagesPlugin extends Plugin {
     console.error(`LocalImages: error: ${error}`);
   }
 
-  onunload() {}
+  onunload() { }
 
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());

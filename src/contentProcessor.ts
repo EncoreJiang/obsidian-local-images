@@ -17,23 +17,21 @@ import {
 } from "./config";
 import { linkHashes } from "./linksHash";
 
-const ATTACHMENTS_DIR = ".attachments";
-
 export function imageTagProcessor(app: App) {
   async function processImageTag(file: TFile, match: string, anchor: string, link: string) {
     if (!isUrl(link)) {
       return match;
     }
 
-    const mediaDir = path.join(file.parent.path, ATTACHMENTS_DIR);
-
-    try {
-      await file.vault.createFolder(mediaDir);
-    } catch (error) {
-      if (!error.message.contains("Folder already exists")) {
-        throw error;
-      }
+    const cwd = file.parent.path;
+    let baseName = file.basename;
+    if (baseName.endsWith('.md')) {
+      baseName = baseName.slice(0, baseName.length - 3)
     }
+    let attachmentDir = `.${baseName}.attachments`
+
+    const mediaDir = path.join(file.parent.path, attachmentDir);
+
 
     try {
       const fileData = await downloadImage(link);
@@ -52,11 +50,20 @@ export function imageTagProcessor(app: App) {
           );
 
           if (needWrite && fileFullPath) {
+
+            try {
+              await file.vault.createFolder(mediaDir);
+            } catch (error) {
+              if (!error.message.contains("Folder already exists")) {
+                throw error;
+              }
+            }
+
             await app.vault.createBinary(fileFullPath, fileData);
           }
 
           if (fileFullPath) {
-            return `![${anchor}](${pathJoin(ATTACHMENTS_DIR, fileName)})`;
+            return `![${anchor}](${pathJoin(attachmentDir, fileName)})`;
           } else {
             return match;
           }
@@ -113,8 +120,8 @@ async function chooseFileName(
   let index = 0;
   while (!fileFullPath && index < MAX_FILENAME_INDEX) {
     const suggestedName = index
-      ?  `${baseName}-${index}.${fileExt}`
-      :  `${baseName}.${fileExt}`;
+      ? `${baseName}-${index}.${fileExt}`
+      : `${baseName}.${fileExt}`;
     const suggestedFullPath = pathJoin(dir, suggestedName);
 
     if (await adapter.exists(suggestedFullPath, false)) {
