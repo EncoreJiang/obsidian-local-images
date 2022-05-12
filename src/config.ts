@@ -19,11 +19,19 @@ export const TIMEOUT_LIKE_INFINITY = 24 * 60 * 60 * 1000;
 
 export const FORBIDDEN_SYMBOLS_FILENAME_PATTERN = /\s+/g;
 export interface ISettings {
-  mediaServerURL: string;
+  // mediaServerURL: string;
   showNotifications: boolean;
+  realTimeUpdate: boolean;
+  realTimeUpdateInterval: number;
+  realTimeAttemptsToProcess: number;
+  include: string;
 }
 
 export const DEFAULT_SETTINGS: ISettings = {
-  mediaServerURL: "http://119.28.140.234:8080/im",
+  realTimeUpdate: false,
+  realTimeUpdateInterval: 1000,
+  realTimeAttemptsToProcess: 3,
+  // mediaServerURL: "http://119.28.140.234:8080/im",
   showNotifications: true,
+  include: ".*\\.md",
 };

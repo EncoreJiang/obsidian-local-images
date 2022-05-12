@@ -1,7 +1,7 @@
 import { URL } from "url";
 import path from "path";
 
-import { App, DataAdapter } from "obsidian";
+import { App, DataAdapter, TFile } from "obsidian";
 
 import {
   isUrl,
@@ -17,21 +17,62 @@ import {
 } from "./config";
 import { linkHashes } from "./linksHash";
 
+const ATTACHMENTS_DIR = ".attachments";
+
 export function imageTagProcessor(app: App) {
-  async function processImageTag(match: string, anchor: string, link: string) {
-    let originURL: URL;
-    try {
-      originURL = new URL(link);
-      if (!originURL) {
-        return match
-      }
-    } catch (_) {
+  async function processImageTag(file: TFile, match: string, anchor: string, link: string) {
+    if (!isUrl(link)) {
       return match;
     }
 
-    console.log(originURL)
+    const mediaDir = path.join(file.parent.path, ATTACHMENTS_DIR);
 
-    return match;
+    try {
+      await file.vault.createFolder(mediaDir);
+    } catch (error) {
+      if (!error.message.contains("Folder already exists")) {
+        throw error;
+      }
+    }
+
+    try {
+      const fileData = await downloadImage(link);
+
+      // when several images refer to the same file they can be partly
+      // failed to download because file already exists, so try to resuggest filename several times
+      let attempt = 0;
+      while (attempt < FILENAME_ATTEMPTS) {
+        try {
+          const { fileFullPath, fileName, needWrite } = await chooseFileName(
+            app.vault.adapter,
+            mediaDir,
+            anchor,
+            link,
+            fileData
+          );
+
+          if (needWrite && fileFullPath) {
+            await app.vault.createBinary(fileFullPath, fileData);
+          }
+
+          if (fileFullPath) {
+            return `![${anchor}](${pathJoin(ATTACHMENTS_DIR, fileName)})`;
+          } else {
+            return match;
+          }
+        } catch (error) {
+          if (error.message === "File already exists.") {
+            attempt++;
+          } else {
+            throw error;
+          }
+        }
+      }
+      return match;
+    } catch (error) {
+      console.warn("Image processing failed: ", error);
+      return match;
+    }
   }
 
   return processImageTag;
@@ -43,10 +84,10 @@ async function chooseFileName(
   baseName: string,
   link: string,
   contentData: ArrayBuffer
-): Promise<{ fileName: string; needWrite: boolean }> {
+): Promise<{ fileFullPath: string; fileName: string; needWrite: boolean }> {
   const fileExt = await fileExtByContent(contentData);
   if (!fileExt) {
-    return { fileName: "", needWrite: false };
+    return { fileFullPath: "", fileName: "", needWrite: false };
   }
   // if there is no anchor try get file name from url
   if (!baseName) {
@@ -67,33 +108,37 @@ async function chooseFileName(
   baseName = cleanFileName(baseName);
 
   let fileName = "";
+  let fileFullPath = "";
   let needWrite = true;
   let index = 0;
-  while (!fileName && index < MAX_FILENAME_INDEX) {
+  while (!fileFullPath && index < MAX_FILENAME_INDEX) {
     const suggestedName = index
-      ? pathJoin(dir, `${baseName}-${index}.${fileExt}`)
-      : pathJoin(dir, `${baseName}.${fileExt}`);
+      ?  `${baseName}-${index}.${fileExt}`
+      :  `${baseName}.${fileExt}`;
+    const suggestedFullPath = pathJoin(dir, suggestedName);
 
-    if (await adapter.exists(suggestedName, false)) {
+    if (await adapter.exists(suggestedFullPath, false)) {
       linkHashes.ensureHashGenerated(link, contentData);
 
-      const fileData = await adapter.readBinary(suggestedName);
+      const fileData = await adapter.readBinary(suggestedFullPath);
 
       if (linkHashes.isSame(link, fileData)) {
+        fileFullPath = suggestedFullPath;
         fileName = suggestedName;
         needWrite = false;
       }
     } else {
+      fileFullPath = suggestedFullPath;
       fileName = suggestedName;
     }
 
     index++;
   }
-  if (!fileName) {
+  if (!fileFullPath) {
     throw new Error("Failed to generate file name for media file.");
   }
 
   linkHashes.ensureHashGenerated(link, contentData);
 
-  return { fileName, needWrite };
+  return { fileFullPath, fileName, needWrite };
 }

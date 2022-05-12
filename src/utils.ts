@@ -5,15 +5,16 @@ import isSvg from "is-svg";
 import filenamify from "filenamify";
 
 import { DIRTY_IMAGE_TAG, FORBIDDEN_SYMBOLS_FILENAME_PATTERN } from "./config";
+import { TFile } from "obsidian";
 /*
 https://stackoverflow.com/a/48032528/1020973
 It will be better to do it type-correct.
 
 */
-export async function replaceAsync(str: any, regex: any, asyncFn: any) {
+export async function replaceAsync(file: TFile, str: any, regex: any, asyncFn: any) {
   const promises: Promise<any>[] = [];
   str.replace(regex, (match: string, ...args: any) => {
-    const promise = asyncFn(match, ...args);
+    const promise = asyncFn(file, match, ...args);
     promises.push(promise);
   });
   const data = await Promise.all(promises);

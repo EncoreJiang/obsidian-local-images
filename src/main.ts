@@ -29,10 +29,9 @@ export default class LocalImagesPlugin extends Plugin {
     // const content = await this.app.vault.read(file);
     const content = await this.app.vault.cachedRead(file);
 
-    const cleanedContent = this.settings.cleanContent
-      ? cleanContent(content)
-      : content;
+    const cleanedContent = content;
     const fixedContent = await replaceAsync(
+      file,
       cleanedContent,
       EXTERNAL_MEDIA_LINK_PATTERN,
       imageTagProcessor(this.app)
@@ -54,6 +53,7 @@ export default class LocalImagesPlugin extends Plugin {
     }
   }
 
+  
   // using arrow syntax for callbacks to correctly pass this context
   processActivePage = async () => {
     const activeFile = this.app.workspace.getActiveFile();
@@ -285,18 +285,6 @@ class SettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName("Clean content")
-      .setDesc("Clean malformed image tags before processing.")
-      .addToggle((toggle) =>
-        toggle
-          .setValue(this.plugin.settings.cleanContent)
-          .onChange(async (value) => {
-            this.plugin.settings.cleanContent = value;
-            await this.plugin.saveSettings();
-          })
-      );
-
-    new Setting(containerEl)
       .setName("Show notifications")
       .setDesc("Show notifications when pages were processed.")
       .addToggle((toggle) =>
@@ -324,18 +312,6 @@ class SettingTab extends PluginSettingTab {
           this.plugin.settings.include = value;
           await this.plugin.saveSettings();
         })
-      );
-
-    new Setting(containerEl)
-      .setName("Media folder")
-      .setDesc("Folder to keep all downloaded media files.")
-      .addText((text) =>
-        text
-          .setValue(this.plugin.settings.mediaRootDirectory)
-          .onChange(async (value) => {
-            this.plugin.settings.mediaRootDirectory = value;
-            await this.plugin.saveSettings();
-          })
       );
   }
 }
