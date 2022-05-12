@@ -1,5 +1,7 @@
 import {
   App,
+  loadMathJax,
+  loadMermaid,
   Notice,
   Plugin,
   PluginSettingTab,
@@ -101,8 +103,15 @@ export default class LocalImagesPlugin extends Plugin {
   async onload() {
     await this.loadSettings();
 
+    try {
+      loadMathJax();
+      loadMermaid();
+    } catch (err) {
+      console.log(err);
+    }
+
     const extension = buildExtension({ plugin: this });
-    this.registerEditorExtension(extension);
+    this.registerEditorExtension([extension]);
 
     this.app.vault.on("rename", function (file, oldname) {
       console.log("rename:", oldname, "->", file.path);

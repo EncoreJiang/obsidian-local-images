@@ -27,7 +27,11 @@ export default {
     exports: "default",
     banner,
   },
-  external: ["obsidian"],
+  external: [
+    "obsidian",
+    '@codemirror/state',
+    '@codemirror/view'
+  ],
   plugins: [
     execute([
       `mkdir -p ${currentDir}/build`,
