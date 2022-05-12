@@ -63,7 +63,7 @@ export function imageTagProcessor(app: App) {
           }
 
           if (fileFullPath) {
-            return `![${anchor}](${pathJoin(attachmentDir, fileName)})`;
+            return `![${anchor}](${encodeURI(pathJoin(attachmentDir, fileName))})`;
           } else {
             return match;
           }

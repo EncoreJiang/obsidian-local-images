@@ -100,6 +100,9 @@ export default class LocalImagesPlugin extends Plugin {
 
   async onload() {
     await this.loadSettings();
+    this.app.vault.on("rename", function (file, oldname) {
+      console.log("rename:", oldname, "->", file.path);
+    })
 
     this.addCommand({
       id: "download-images",

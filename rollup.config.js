@@ -1,5 +1,7 @@
 import typescript from "@rollup/plugin-typescript";
-import { nodeResolve } from "@rollup/plugin-node-resolve";
+import {
+  nodeResolve
+} from "@rollup/plugin-node-resolve";
 import rollupJson from "rollup-plugin-json";
 import commonjs from "@rollup/plugin-commonjs";
 import execute from "rollup-plugin-execute";
@@ -29,11 +31,13 @@ export default {
   plugins: [
     execute([
       `mkdir -p ${currentDir}/build`,
-      `cp -u ${currentDir}/manifest.json ${currentDir}/build/manifest.json`,
-      `cp -u ${currentDir}/styles.css ${currentDir}/build/styles.css`,
+      `cp ${currentDir}/manifest.json ${currentDir}/build/manifest.json`,
+      `cp ${currentDir}/styles.css ${currentDir}/build/styles.css`,
     ]),
     typescript(),
-    nodeResolve({ browser: true }),
+    nodeResolve({
+      browser: true
+    }),
     rollupJson(),
     commonjs(),
   ],
