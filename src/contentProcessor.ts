@@ -93,6 +93,7 @@ async function chooseFileName(
   contentData: ArrayBuffer
 ): Promise<{ fileFullPath: string; fileName: string; needWrite: boolean }> {
   const fileExt = await fileExtByContent(contentData);
+
   if (!fileExt) {
     return { fileFullPath: "", fileName: "", needWrite: false };
   }

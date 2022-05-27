@@ -29,7 +29,6 @@ export function getViewPlugin(params: { plugin: LocalImagesPlugin }): Extension 
             updateAsyncDecorations(view: EditorView) {
                 const mdView = view.state.field(editorViewField);
                 const sourceFile: TFile = mdView.file;
-                console.log('editorLivePreviewField:', view.state.field(editorLivePreviewField))；
                 if (view.state.field(editorLivePreviewField)) {
                     const element = mdView.contentEl
 
