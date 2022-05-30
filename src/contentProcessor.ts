@@ -9,6 +9,7 @@ import {
   fileExtByContent,
   cleanFileName,
   pathJoin,
+  encodePath,
 } from "./utils";
 import {
   FILENAME_TEMPLATE,
@@ -63,7 +64,7 @@ export function imageTagProcessor(app: App) {
           }
 
           if (fileFullPath) {
-            return `![${anchor}](${encodeURI(pathJoin(attachmentDir, fileName))})`;
+            return `![${anchor}](${encodePath((pathJoin(attachmentDir, fileName)))})`;
           } else {
             return match;
           }
@@ -85,7 +86,7 @@ export function imageTagProcessor(app: App) {
   return processImageTag;
 }
 
-async function chooseFileName(
+export async function chooseFileName(
   adapter: DataAdapter,
   dir: string,
   baseName: string,

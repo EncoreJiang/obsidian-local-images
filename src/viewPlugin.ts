@@ -3,10 +3,12 @@ import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate } from '@
 import { editorLivePreviewField, editorViewField, TFile } from 'obsidian';
 import { nextTick } from 'process';
 import path from 'path';
-import { ATTACHMENTS_CLASS } from './utils';
+import { ATTACHMENTS_CLASS, ATTACHMENTS_FILE_CLASS } from './utils';
 
 import { StateEffect, StateEffectType, StateField } from '@codemirror/state';
 import LocalImagesPlugin from 'src/main';
+
+const reImageExt = /.(png|jpg|jpeg|bmp|gif|tif|svg)$/i;
 
 // --> View Plugin
 export function getViewPlugin(params: { plugin: LocalImagesPlugin }): Extension {
@@ -16,20 +18,19 @@ export function getViewPlugin(params: { plugin: LocalImagesPlugin }): Extension 
     const imageViewPlugin = ViewPlugin.fromClass(
         class {
             constructor(view: EditorView) {
-                this.updateAsyncDecorations(view);
+                this.updateImageView(view);
             }
 
             update(update: ViewUpdate) {
                 console.log(update.docChanged, update.viewportChanged)
                 if ((update.docChanged || update.viewportChanged)) {
-                    this.updateAsyncDecorations(update.view);
+                    this.updateImageView(update.view);
                 }
             }
 
-            updateAsyncDecorations(view: EditorView) {
+            updateImageView(view: EditorView) {
                 const mdView = view.state.field(editorViewField);
                 const sourceFile: TFile = mdView.file;
-                console.log('editorLivePreviewField:', view.state.field(editorLivePreviewField))；
                 if (view.state.field(editorLivePreviewField)) {
                     const element = mdView.contentEl
 
@@ -41,50 +42,37 @@ export function getViewPlugin(params: { plugin: LocalImagesPlugin }): Extension 
                             baseName = baseName.slice(0, baseName.length - 3)
                         }
                         let attachmentDir = `.${baseName}.attachments`
-                        console.log(attachmentDir);
                         for (let index = 0; index < embeds.length; index++) {
                             const embed = embeds.item(index);
                             console.log(embed);
                             const src = embed.getAttr('src');
-                            if (src && embed.className !== ATTACHMENTS_CLASS) {
+                            if (src && !embed.className.contains('attachments')) {
                                 if (src.startsWith(attachmentDir)) {
-                                    embed.className = ATTACHMENTS_CLASS;
-                                    const image = element.createEl('img');
-                                    // this.app.vault.getResourcePath(this.app.vault.getAbstractFileByPath(context.sourcePath)[0])
-                                    const parentPath = sourceFile.parent.path;
-                                    const href = window.require("url").pathToFileURL(
-                                        path.join((plugin.app.vault.adapter as any)['basePath'], parentPath, src)).href;
-                                    console.log("getAbstractFileByPath", href);
-                                    image.src = "app://local/" + href.replace("file:///", "");
-                                    embed.innerHTML = '';
-                                    embed.appendChild(image);
+                                    if (reImageExt.test(src)) {
+                                        embed.className = ATTACHMENTS_CLASS;
+                                        const image = element.createEl('img');
+                                        // this.app.vault.getResourcePath(this.app.vault.getAbstractFileByPath(context.sourcePath)[0])
+                                        const parentPath = sourceFile.parent.path;
+                                        const href = window.require("url").pathToFileURL(
+                                            path.join((plugin.app.vault.adapter as any)['basePath'], parentPath, src)).href;
+                                        console.log("getAbstractFileByPath", href);
+                                        image.src = "app://local/" + href.replace("file:///", "");
+                                        embed.innerHTML = '';
+                                        embed.appendChild(image);
+                                    } else {
+                                        embed.className = ATTACHMENTS_FILE_CLASS;
+                                        embed.innerHTML = `<div class="file-embed-title">
+              <span class="file-embed-icon">
+                <svg viewBox="0 0 100 100" class="document" width="22" height="22">
+                  <path fill="currentColor" stroke="currentColor" d="M14,4v92h72V29.2l-0.6-0.6l-24-24L60.8,4L14,4z M18,8h40v24h24v60H18L18,8z M62,10.9L79.1,28H62V10.9z"></path>
+                </svg>
+              </span> 
+              ${path.basename(src)}
+              </div>`
+                                    }
                                 }
                             }
 
-                            // const embed = embeds.item(index);
-                            // console.log(embed);
-                            // const src = embed.getAttr('src');
-                            // if (src) {
-                            //     if (src.startsWith('.attachments/')) {
-                            //         embed.className = "internal-embed image-embed is-loaded";
-                            //         const image = element.createEl('img');
-                            //         // this.app.vault.getResourcePath(this.app.vault.getAbstractFileByPath(context.sourcePath)[0])
-                            //         const href = window.require("url").pathToFileURL(
-                            //             path.join((plugin.app.vault.adapter as any)['basePath'], sourceFile.parent.path, src)).href;
-                            //         console.log("getAbstractFileByPath", href);
-                            //         image.src = "app://local/" + href.replace("file:///", "");
-                            //         embed.innerHTML = '';
-                            //         embed.appendChild(image);
-                            //         // image.addEventListener("click", (event) => {event.stopPropagation(); }), true;
-                            //     }
-                            // }
-                            // const codeblock = codeblocks.item(index);
-                            // const text = codeblock.innerText.trim();
-                            // const isEmoji = text[0] === ":" && text[text.length - 1] === ":";
-
-                            // if (isEmoji) {
-                            //     context.addChild(new Emoji(codeblock, text));
-                            // }
                         }
                     })
                 }

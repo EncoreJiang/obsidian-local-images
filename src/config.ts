@@ -28,7 +28,7 @@ export interface ISettings {
 }
 
 export const DEFAULT_SETTINGS: ISettings = {
-  realTimeUpdate: false,
+  realTimeUpdate: true,
   realTimeUpdateInterval: 1000,
   realTimeAttemptsToProcess: 3,
   // mediaServerURL: "http://119.28.140.234:8080/im",
