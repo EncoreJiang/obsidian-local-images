@@ -40,9 +40,8 @@ export async function downloadImage(url: string): Promise<ArrayBuffer> {
 
 export async function fileExtByContent(content: ArrayBuffer) {
   const fileExt = (await fromBuffer(content))?.ext;
-
   // if XML, probably it is SVG
-  if (fileExt == "xml") {
+  if (!fileExt || fileExt == "xml") {
     const buffer = Buffer.from(content);
     if (isSvg(buffer)) return "svg";
   }
