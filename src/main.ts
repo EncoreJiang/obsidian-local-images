@@ -219,7 +219,7 @@ export default class LocalImagesPlugin extends Plugin {
 
         for (let index = 0; index < embeds.length; index++) {
           const embed = embeds.item(index);
-          console.log(embed);
+          // console.log(embed);
           const src = embed.getAttr('src');
           if (src && embed.className !== ATTACHMENTS_CLASS) {
             if (src.startsWith(attachmentDir)) {
@@ -229,7 +229,7 @@ export default class LocalImagesPlugin extends Plugin {
               const parentPath = this.app.vault.getAbstractFileByPath(context.sourcePath).parent.path;
               const href = window.require("url").pathToFileURL(
                 path.join((this.app.vault.adapter as any)['basePath'], parentPath, src)).href;
-              console.log("getAbstractFileByPath", href);
+              // console.log("getAbstractFileByPath", href);
               image.src = "app://local/" + href.replace("file:///", "");
               embed.appendChild(image);
             }
@@ -242,7 +242,7 @@ export default class LocalImagesPlugin extends Plugin {
 
         for (let index = 0; index < embeds.length; index++) {
           const embed = embeds.item(index);
-          console.log(embed);
+          // console.log(embed);
           const src = embed.getAttr('src');
           if (src && embed.className !== ATTACHMENTS_FILE_CLASS) {
             if (src.startsWith(attachmentDir)) {

@@ -30,8 +30,8 @@ export function getViewPlugin(params: { plugin: LocalImagesPlugin }): Extension 
 
             updateImageView(view: EditorView) {
                 const mdView = view.state.field(editorViewField);
-                const sourceFile: TFile = mdView.file;
-                if (view.state.field(editorLivePreviewField)) {
+                if (mdView && view.state.field(editorLivePreviewField)) {
+                    const sourceFile: TFile = mdView.file;
                     const element = mdView.contentEl
 
                     nextTick(() => {
@@ -44,7 +44,7 @@ export function getViewPlugin(params: { plugin: LocalImagesPlugin }): Extension 
                         let attachmentDir = `.${baseName}.attachments`
                         for (let index = 0; index < embeds.length; index++) {
                             const embed = embeds.item(index);
-                            console.log(embed);
+                            // console.log(embed);
                             const src = embed.getAttr('src');
                             if (src && !embed.className.contains('attachments')) {
                                 if (src.startsWith(attachmentDir)) {
@@ -55,7 +55,7 @@ export function getViewPlugin(params: { plugin: LocalImagesPlugin }): Extension 
                                         const parentPath = sourceFile.parent.path;
                                         const href = window.require("url").pathToFileURL(
                                             path.join((plugin.app.vault.adapter as any)['basePath'], parentPath, src)).href;
-                                        console.log("getAbstractFileByPath", href);
+                                        // console.log("getAbstractFileByPath", href);
                                         image.src = "app://local/" + href.replace("file:///", "");
                                         embed.innerHTML = '';
                                         embed.appendChild(image);
